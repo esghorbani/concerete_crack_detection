@@ -19,6 +19,7 @@ dist/
 *.log
 *.ckpt
 *.pth
+!/src/models/*.pth
 
 # IDE/Editor
 .idea/
