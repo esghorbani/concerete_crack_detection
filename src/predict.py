@@ -72,6 +72,27 @@ def apply_custom_style():
             line-height: 1.5;
         }
 
+        .section-wrapper {
+            background: transparent;
+            border-radius: 22px;
+            padding-bottom: 1rem;
+        }
+
+        .section-header {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 999px;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 18px;
+            font-size: 1rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0.85rem;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+        }
+
         .section-card {
             background: #ffffff;
             border: 1px solid #ececec;
@@ -95,18 +116,24 @@ def apply_custom_style():
         }
 
         .result-box {
-            background: #ffffff;
-            border: 1px solid #ececec;
-            border-radius: 18px;
-            padding: 14px;
-            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+            background: transparent;
+            border-radius: 22px;
+            padding: 0 0 1rem 0;
         }
 
-        .result-title {
+        .result-header {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 999px;
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            padding: 0 18px;
             font-size: 1rem;
             font-weight: 700;
             color: #111827;
-            margin-bottom: 0.75rem;
+            margin-bottom: 0.85rem;
+            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
         }
 
         .status-pill-detected {
@@ -257,8 +284,14 @@ def main():
     left_col, right_col = st.columns([1.05, 1.4])
 
     with left_col:
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown('<div class="card-title">Upload & Settings</div>', unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div class="section-wrapper">
+                <div class="section-header">Upload & Settings</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         uploaded_file = st.file_uploader(
             "Upload image",
@@ -285,30 +318,34 @@ def main():
             """,
             unsafe_allow_html=True,
         )
-        st.markdown("</div>", unsafe_allow_html=True)
 
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown('<div class="card-title">How to use</div>', unsafe_allow_html=True)
         st.markdown(
             """
-            <div class="subtle-text">
-                1. Upload a concrete surface image.<br>
-                2. Adjust the detection threshold if needed.<br>
-                3. Review the predicted mask and overlay.<br>
-                4. Download the outputs if needed.
+            <div class="section-card">
+                <div class="card-title">How to use</div>
+                <div class="subtle-text">
+                    1. Upload a concrete surface image.<br>
+                    2. Adjust the detection threshold if needed.<br>
+                    3. Review the predicted mask and overlay.<br>
+                    4. Download the outputs if needed.
+                </div>
             </div>
             """,
             unsafe_allow_html=True,
         )
-        st.markdown("</div>", unsafe_allow_html=True)
 
     with right_col:
-        st.markdown('<div class="section-card">', unsafe_allow_html=True)
-        st.markdown('<div class="card-title">Detection Workspace</div>', unsafe_allow_html=True)
+        st.markdown(
+            """
+            <div class="section-wrapper">
+                <div class="section-header">Detection Workspace</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
         if uploaded_file is None:
             st.info("Upload an image to run detection.")
-            st.markdown("</div>", unsafe_allow_html=True)
             return
 
         image_pil = Image.open(uploaded_file)
@@ -333,27 +370,41 @@ def main():
         metric_col2.metric("Crack Pixels", f"{crack_pixels:,}")
         metric_col3.metric("Estimated Area", f"{crack_ratio:.2f}%")
 
-        st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("## Results")
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        st.markdown('<div class="result-box">', unsafe_allow_html=True)
-        st.markdown('<div class="result-title">Original Image</div>', unsafe_allow_html=True)
-        st.image(image_rgb, use_container_width=True)
+        st.markdown(
+            """
+            <div class="result-box">
+                <div class="result-header">Original Image</div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.image(image_rgb, width="stretch")
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
-        st.markdown('<div class="result-box">', unsafe_allow_html=True)
-        st.markdown('<div class="result-title">Predicted Mask</div>', unsafe_allow_html=True)
-        st.image(mask, use_container_width=True)
+        st.markdown(
+            """
+            <div class="result-box">
+                <div class="result-header">Predicted Mask</div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.image(mask, width="stretch")
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col3:
-        st.markdown('<div class="result-box">', unsafe_allow_html=True)
-        st.markdown('<div class="result-title">Overlay Result</div>', unsafe_allow_html=True)
-        st.image(blended, use_container_width=True)
+        st.markdown(
+            """
+            <div class="result-box">
+                <div class="result-header">Overlay Result</div>
+            """,
+            unsafe_allow_html=True,
+        )
+        st.image(blended, width="stretch")
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("## Export Results")
@@ -368,7 +419,7 @@ def main():
             data=pil_to_png_bytes(mask_pil),
             file_name="predicted_mask.png",
             mime="image/png",
-            use_container_width=True,
+            width="stretch",
         )
 
     with dl2:
@@ -377,7 +428,7 @@ def main():
             data=pil_to_png_bytes(overlay_pil),
             file_name="overlay_result.png",
             mime="image/png",
-            use_container_width=True,
+            width="stretch",
         )
 
     st.markdown(
