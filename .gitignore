@@ -1,0 +1,29 @@
+# Byte-compiled / cached files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+env/
+ENV/
+.env/
+venv/
+.venv/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Logs and checkpoints
+*.log
+*.ckpt
+*.pth
+
+# IDE/Editor
+.idea/
+.vscode/
+*.swp
+
+# System
+.DS_Store
