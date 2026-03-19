@@ -38,6 +38,9 @@ TEST_IMAGE_DIR = os.path.join(BASE_DIR, "test_samples")
 MAX_TEST_IMAGES = 5
 GALLERY_INDEX_KEY = "test_gallery_index"
 RESULT_IMAGE_WIDTH = 360
+GALLERY_MODAL_FLAG = "sample_gallery_modal_open"
+HAS_STREAMLIT_MODAL = hasattr(st, "modal")
+HAS_STREAMLIT_POPOVER = hasattr(st, "popover")
 
 
 # ---------------------------------------------------------
@@ -159,6 +162,29 @@ def apply_custom_style():
             color: #6b7280;
             font-size: 0.95rem;
             line-height: 1.5;
+        }
+
+        .sample-gallery-status {
+            background: #f8fafc;
+            border: 1px dashed #cbd5f5;
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+            color: #475569;
+            margin-bottom: 0.65rem;
+        }
+
+        .gallery-modal-heading {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            color: #0f172a;
+        }
+
+        .gallery-modal-subtext {
+            font-size: 0.9rem;
+            color: #475569;
+            margin-bottom: 0.85rem;
         }
 
         .result-box {
@@ -288,6 +314,61 @@ def render_gallery_selector(paths):
     active_path = paths[selected_index]
 
     return active_path
+
+
+def render_gallery_modal(paths):
+    """Wrap the gallery selector inside a modal-like popover trigger."""
+    if not paths:
+        return None
+
+    if GALLERY_MODAL_FLAG not in st.session_state:
+        st.session_state[GALLERY_MODAL_FLAG] = False
+
+    stored_index = st.session_state.get(GALLERY_INDEX_KEY)
+    selected_label = None
+    if stored_index is not None and 0 <= stored_index < len(paths):
+        selected_label = os.path.basename(paths[stored_index])
+
+    selected_path = None
+    button_label = "Browse sample gallery"
+
+    if HAS_STREAMLIT_MODAL:
+        if st.button(button_label, use_container_width=True):
+            st.session_state[GALLERY_MODAL_FLAG] = True
+
+        if st.session_state.get(GALLERY_MODAL_FLAG):
+            with st.modal("Sample test images", use_container_width=True):
+                st.markdown(
+                    """
+                    <div class="gallery-modal-heading">Sample test images</div>
+                    <div class="gallery-modal-subtext">Pick an example image to quickly preview the detection workflow.</div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                selected_path = render_gallery_selector(paths)
+
+                if st.button("Close gallery", use_container_width=True):
+                    st.session_state[GALLERY_MODAL_FLAG] = False
+    elif HAS_STREAMLIT_POPOVER:
+        with st.popover(button_label, use_container_width=True):
+            st.markdown(
+                """
+                <div class="gallery-modal-heading">Sample test images</div>
+                <div class="gallery-modal-subtext">Pick an example image to quickly preview the detection workflow.</div>
+                """,
+                unsafe_allow_html=True,
+            )
+            selected_path = render_gallery_selector(paths)
+    else:
+        st.warning(
+            "Upgrade Streamlit to access modal or popover components. Falling back to inline picker."
+        )
+        selected_path = render_gallery_selector(paths)
+
+    if selected_path is None and selected_label:
+        selected_path = paths[stored_index]
+
+    return selected_path
 
 
 # ---------------------------------------------------------
@@ -447,7 +528,7 @@ def main():
                     "No test images detected. Add up to 5 PNG/JPEG images inside the test_samples/ folder."
                 )
             else:
-                selected_sample_path = render_gallery_selector(test_gallery_paths)
+                selected_sample_path = render_gallery_modal(test_gallery_paths)
 
         threshold = st.slider(
             "Detection threshold",
@@ -480,7 +561,7 @@ def main():
             if image_source == upload_option:
                 st.info("Upload an image or switch to the sample test images to continue.")
             else:
-                st.info("Select a sample test image to continue.")
+                st.info("Choose a test image to continue.")
             return
 
         with st.spinner("Running damage detection..."):
