@@ -51,6 +51,10 @@ def apply_custom_style():
             background-color: #ffffff;
         }
 
+        [data-testid="stFooter"] {
+            display: none;
+        }
+
         .block-container {
             padding-top: 2.5rem;
             padding-bottom: 1.5rem;
