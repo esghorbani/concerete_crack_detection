@@ -35,7 +35,8 @@ BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 MODEL_PATH = os.path.join(BASE_DIR, "src", "models", "best_model.pth")
 LOGO_PATH = os.path.join(BASE_DIR, "app", "logo.png")
 TEST_IMAGE_DIR = os.path.join(BASE_DIR, "test_samples")
-MAX_TEST_IMAGES = 5
+# Number of curated samples exposed inside the modal gallery
+MAX_TEST_IMAGES = 10
 GALLERY_INDEX_KEY = "test_gallery_index"
 RESULT_IMAGE_WIDTH = 360
 GALLERY_MODAL_FLAG = "sample_gallery_modal_open"
