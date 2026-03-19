@@ -382,7 +382,7 @@ def main():
     model, device = load_model()
     test_gallery_paths = get_test_gallery()
     upload_option = "Upload image"
-    gallery_option = "Sample gallery"
+    gallery_option = "Sample test images"
     image_source = upload_option
     selected_sample_path = None
 
@@ -404,7 +404,7 @@ def main():
         <div class="section-card instructions-card">
             <div class="card-title">How to use</div>
             <div class="subtle-text">
-                1. Pick an input image (upload or gallery).<br>
+                1. Pick an input image (upload or sample test images).<br>
                 2. Adjust the detection threshold if needed.<br>
                 3. Review the prediction mask and overlay.<br>
                 4. Download the outputs for reporting.
@@ -478,9 +478,9 @@ def main():
 
         if image_pil is None:
             if image_source == upload_option:
-                st.info("Upload an image or switch to the test gallery to continue.")
+                st.info("Upload an image or switch to the sample test images to continue.")
             else:
-                st.info("Select a sample from the gallery to continue.")
+                st.info("Select a sample test image to continue.")
             return
 
         with st.spinner("Running damage detection..."):
