@@ -244,21 +244,28 @@ def render_gallery_selector(paths):
         return None
 
     captions = [os.path.basename(path) for path in paths]
-    default_index = st.session_state.get(GALLERY_INDEX_KEY, 0)
-    default_index = min(max(default_index, 0), len(paths) - 1)
+    stored_index = st.session_state.get(GALLERY_INDEX_KEY)
+    stored_index = (
+        min(max(stored_index, 0), len(paths) - 1) if stored_index is not None else None
+    )
 
     if image_select is None:
+        placeholder_label = "\u200b"
+        options = [placeholder_label] + captions
         st.warning(
             "Install the optional dependency `streamlit-image-select` to enable clickable thumbnails."
         )
         selected_label = st.radio(
             "",
-            options=captions,
-            index=default_index,
+            options=options,
+            index=(stored_index + 1) if stored_index is not None else 0,
             horizontal=True,
             label_visibility="collapsed",
         )
-        selected_index = captions.index(selected_label)
+        if selected_label == placeholder_label:
+            selected_index = None
+        else:
+            selected_index = captions.index(selected_label)
     else:
         selected_index = image_select(
             label="",
@@ -266,12 +273,12 @@ def render_gallery_selector(paths):
             captions=captions,
             use_container_width=True,
             return_value="index",
-            index=default_index,
+            index=stored_index if stored_index is not None else -1,
             key="gallery_image_select",
         )
 
-    if selected_index is None:
-        selected_index = default_index
+    if selected_index is None or selected_index < 0:
+        return None
 
     st.session_state[GALLERY_INDEX_KEY] = selected_index
     active_path = paths[selected_index]
@@ -481,7 +488,7 @@ def main():
             if image_source == upload_option:
                 st.info("Upload an image or switch to the test gallery to continue.")
             else:
-                st.info("Add images to test_samples/ to enable the gallery.")
+                st.info("Select a sample from the gallery to continue.")
             return
 
         with st.spinner("Running damage detection..."):
