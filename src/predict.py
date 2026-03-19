@@ -11,6 +11,10 @@ from PIL import Image
 import segmentation_models_pytorch as smp
 import streamlit as st
 import torch
+try:
+    from streamlit_image_select import image_select
+except ImportError:  # pragma: no cover - optional dependency
+    image_select = None
 
 # Add project root to Python path so local imports work reliably
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -30,6 +34,10 @@ st.set_page_config(
 BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 MODEL_PATH = os.path.join(BASE_DIR, "src", "models", "best_model.pth")
 LOGO_PATH = os.path.join(BASE_DIR, "app", "logo.png")
+TEST_IMAGE_DIR = os.path.join(BASE_DIR, "test_samples")
+MAX_TEST_IMAGES = 5
+GALLERY_INDEX_KEY = "test_gallery_index"
+RESULT_IMAGE_WIDTH = 360
 
 
 # ---------------------------------------------------------
@@ -85,41 +93,62 @@ def apply_custom_style():
             line-height: 1.5;
         }
 
+        :root {
+            --box-radius: 18px;
+            --box-bg: #ffffff;
+            --box-border: #e2e8f0;
+            --box-padding: 18px;
+            --box-header-height: 56px;
+            --box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+        }
+
         .section-wrapper {
             background: transparent;
-            border-radius: 22px;
+            border-radius: var(--box-radius);
             padding-bottom: 1rem;
         }
 
         .section-header {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 999px;
-            min-height: 48px;
+            background: var(--box-bg);
+            border: 1px solid var(--box-border);
+            border-radius: var(--box-radius);
+            min-height: var(--box-header-height);
             display: flex;
             align-items: center;
-            padding: 0 18px;
+            padding: 0 var(--box-padding);
             font-size: 1rem;
             font-weight: 700;
             color: #111827;
             margin-bottom: 0.85rem;
-            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+            box-shadow: var(--box-shadow);
         }
 
         .section-card {
-            background: #ffffff;
-            border: 1px solid #ececec;
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.04);
+            background: var(--box-bg);
+            border: 1px solid var(--box-border);
+            border-radius: var(--box-radius);
+            padding: var(--box-padding);
+            box-shadow: var(--box-shadow);
             margin-bottom: 1rem;
         }
 
         .card-title {
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            min-height: auto;
+            display: block;
+            padding: 0;
             font-size: 1.05rem;
             font-weight: 700;
             color: #111827;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
+            box-shadow: none;
+        }
+
+        .instructions-card {
+            margin-top: 0.5rem;
+            margin-bottom: 1.5rem;
         }
 
         .subtle-text {
@@ -130,23 +159,23 @@ def apply_custom_style():
 
         .result-box {
             background: transparent;
-            border-radius: 22px;
+            border-radius: var(--box-radius);
             padding: 0 0 1rem 0;
         }
 
         .result-header {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 999px;
-            min-height: 48px;
+            background: var(--box-bg);
+            border: 1px solid var(--box-border);
+            border-radius: var(--box-radius);
+            min-height: var(--box-header-height);
             display: flex;
             align-items: center;
-            padding: 0 18px;
+            padding: 0 var(--box-padding);
             font-size: 1rem;
             font-weight: 700;
             color: #111827;
             margin-bottom: 0.85rem;
-            box-shadow: 0 6px 18px rgba(15, 23, 42, 0.08);
+            box-shadow: var(--box-shadow);
         }
 
         .status-pill-detected {
@@ -192,6 +221,62 @@ def get_logo_img_tag():
         encoded = base64.b64encode(logo_file.read()).decode("utf-8")
 
     return f'<img src="data:image/png;base64,{encoded}" alt="Avenum Solutions logo" />'
+
+
+def get_test_gallery(limit=MAX_TEST_IMAGES):
+    """Return up to `limit` absolute paths for curated test images."""
+    if not os.path.isdir(TEST_IMAGE_DIR):
+        return []
+
+    gallery = []
+    for filename in sorted(os.listdir(TEST_IMAGE_DIR)):
+        if filename.lower().endswith((".jpg", ".jpeg", ".png")):
+            gallery.append(os.path.join(TEST_IMAGE_DIR, filename))
+        if len(gallery) >= limit:
+            break
+
+    return gallery
+
+
+def render_gallery_selector(paths):
+    """Render a clickable gallery using streamlit-image-select and return the chosen path."""
+    if not paths:
+        return None
+
+    captions = [os.path.basename(path) for path in paths]
+    default_index = st.session_state.get(GALLERY_INDEX_KEY, 0)
+    default_index = min(max(default_index, 0), len(paths) - 1)
+
+    if image_select is None:
+        st.warning(
+            "Install the optional dependency `streamlit-image-select` to enable clickable thumbnails."
+        )
+        selected_label = st.radio(
+            "",
+            options=captions,
+            index=default_index,
+            horizontal=True,
+            label_visibility="collapsed",
+        )
+        selected_index = captions.index(selected_label)
+    else:
+        selected_index = image_select(
+            label="",
+            images=paths,
+            captions=captions,
+            use_container_width=True,
+            return_value="index",
+            index=default_index,
+            key="gallery_image_select",
+        )
+
+    if selected_index is None:
+        selected_index = default_index
+
+    st.session_state[GALLERY_INDEX_KEY] = selected_index
+    active_path = paths[selected_index]
+
+    return active_path
 
 
 # ---------------------------------------------------------
@@ -284,6 +369,11 @@ def main():
         st.stop()
 
     model, device = load_model()
+    test_gallery_paths = get_test_gallery()
+    upload_option = "Upload image"
+    gallery_option = "Sample gallery"
+    image_source = upload_option
+    selected_sample_path = None
 
     hero_html = f"""
         <div class="hero-row">
@@ -299,6 +389,18 @@ def main():
     """
 
     st.markdown(hero_html, unsafe_allow_html=True)
+    instructions_html = """
+        <div class="section-card instructions-card">
+            <div class="card-title">How to use</div>
+            <div class="subtle-text">
+                1. Pick an input image (upload or gallery).<br>
+                2. Adjust the detection threshold if needed.<br>
+                3. Review the prediction mask and overlay.<br>
+                4. Download the outputs for reporting.
+            </div>
+        </div>
+    """
+    st.markdown(instructions_html, unsafe_allow_html=True)
 
     left_col, right_col = st.columns([1.05, 1.4])
 
@@ -312,11 +414,29 @@ def main():
             unsafe_allow_html=True,
         )
 
-        uploaded_file = st.file_uploader(
-            "Upload image",
-            type=["jpg", "jpeg", "png"],
-            help="Supported formats: JPG, JPEG, PNG",
+        image_source = st.radio(
+            "Image source",
+            options=[gallery_option, upload_option],
+            horizontal=True,
+            label_visibility="collapsed",
         )
+
+        if image_source == upload_option:
+            uploaded_file = st.file_uploader(
+                "Upload image",
+                type=["jpg", "jpeg", "png"],
+                label_visibility="collapsed",
+            )
+        else:
+            uploaded_file = None
+
+        if image_source == gallery_option:
+            if not test_gallery_paths:
+                st.warning(
+                    "No test images detected. Add up to 5 PNG/JPEG images inside the test_samples/ folder."
+                )
+            else:
+                selected_sample_path = render_gallery_selector(test_gallery_paths)
 
         threshold = st.slider(
             "Detection threshold",
@@ -338,21 +458,6 @@ def main():
             unsafe_allow_html=True,
         )
 
-        st.markdown(
-            """
-            <div class="section-card">
-                <div class="card-title">How to use</div>
-                <div class="subtle-text">
-                    1. Upload a concrete surface image.<br>
-                    2. Adjust the detection threshold if needed.<br>
-                    3. Review the predicted mask and overlay.<br>
-                    4. Download the outputs if needed.
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
     with right_col:
         st.markdown(
             """
@@ -363,11 +468,21 @@ def main():
             unsafe_allow_html=True,
         )
 
-        if uploaded_file is None:
-            st.info("Upload an image to run detection.")
-            return
+        image_pil = None
+        image_name = ""
+        if image_source == upload_option and uploaded_file is not None:
+            image_pil = Image.open(uploaded_file)
+            image_name = uploaded_file.name
+        elif image_source == gallery_option and selected_sample_path:
+            image_pil = Image.open(selected_sample_path)
+            image_name = os.path.basename(selected_sample_path)
 
-        image_pil = Image.open(uploaded_file)
+        if image_pil is None:
+            if image_source == upload_option:
+                st.info("Upload an image or switch to the test gallery to continue.")
+            else:
+                st.info("Add images to test_samples/ to enable the gallery.")
+            return
 
         with st.spinner("Running damage detection..."):
             image_rgb, mask, blended, crack_pixels, crack_ratio, crack_detected = predict(
@@ -391,7 +506,7 @@ def main():
 
 
     st.markdown("## Results")
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3 = st.columns(3, gap="large")
 
     with col1:
         st.markdown(
@@ -401,7 +516,7 @@ def main():
             """,
             unsafe_allow_html=True,
         )
-        st.image(image_rgb, width="stretch")
+        st.image(image_rgb, width=RESULT_IMAGE_WIDTH)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
@@ -412,7 +527,7 @@ def main():
             """,
             unsafe_allow_html=True,
         )
-        st.image(mask, width="stretch")
+        st.image(mask, width=RESULT_IMAGE_WIDTH)
         st.markdown("</div>", unsafe_allow_html=True)
 
     with col3:
@@ -423,7 +538,7 @@ def main():
             """,
             unsafe_allow_html=True,
         )
-        st.image(blended, width="stretch")
+        st.image(blended, width=RESULT_IMAGE_WIDTH)
         st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("## Export Results")
