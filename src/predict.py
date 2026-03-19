@@ -453,18 +453,6 @@ def main():
             step=0.05,
         )
 
-        st.markdown(
-            f"""
-            <div class="subtle-text">
-                <strong>Runtime device:</strong> {device}<br>
-                <strong>Model:</strong> U-Net / ResNet34<br>
-                <strong>Weights:</strong> src/models/best_model.pth<br>
-                <strong>Input size:</strong> 256 x 256
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-
     with right_col:
         st.markdown(
             """
