@@ -1,3 +1,4 @@
+import base64
 import os
 import sys
 from io import BytesIO
@@ -43,20 +44,32 @@ def apply_custom_style():
         }
 
         .block-container {
-            padding-top:10rem;
-            padding-bottom: 2rem;
-            padding-left: 2rem;
-            padding-right: 2rem;
+            padding-top: 2.5rem;
+            padding-bottom: 1.5rem;
+            padding-left: 1.5rem;
+            padding-right: 1.5rem;
             max-width: 1400px;
         }
 
+        .hero-row {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .hero-row img {
+            max-width: 240px;
+            height: auto;
+        }
+
         .top-banner {
-            background: #ffffff;
-            border: 1px solid #ececec;
-            border-radius: 22px;
-            padding: 24px 28px;
-            margin-bottom: 1.2rem;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+            background: transparent;
+            border: none;
+            border-radius: 0;
+            padding: 0 0 1.2rem 0;
+            margin-bottom: 0;
+            box-shadow: none;
         }
 
         .top-title {
@@ -170,6 +183,17 @@ def apply_custom_style():
     )
 
 
+def get_logo_img_tag():
+    """Return an inline base64 <img> tag for the logo if available."""
+    if not os.path.exists(LOGO_PATH):
+        return ""
+
+    with open(LOGO_PATH, "rb") as logo_file:
+        encoded = base64.b64encode(logo_file.read()).decode("utf-8")
+
+    return f'<img src="data:image/png;base64,{encoded}" alt="Avenum Solutions logo" />'
+
+
 # ---------------------------------------------------------
 # Load trained model once and cache it
 # ---------------------------------------------------------
@@ -261,15 +285,9 @@ def main():
 
     model, device = load_model()
 
-    header_left, header_right = st.columns([1, 4])
-
-    with header_left:
-        if os.path.exists(LOGO_PATH):
-            st.image(LOGO_PATH, width=300)
-
-    with header_right:
-        st.markdown(
-            """
+    hero_html = f"""
+        <div class="hero-row">
+            {get_logo_img_tag()}
             <div class="top-banner">
                 <div class="top-title">Avenum Solutions | Concrete Damage Detection</div>
                 <div class="top-subtitle">
@@ -277,9 +295,10 @@ def main():
                     predicted mask, and overlay result.
                 </div>
             </div>
-            """,
-            unsafe_allow_html=True,
-        )
+        </div>
+    """
+
+    st.markdown(hero_html, unsafe_allow_html=True)
 
     left_col, right_col = st.columns([1.05, 1.4])
 
