@@ -36,7 +36,7 @@ MODEL_PATH = os.path.join(BASE_DIR, "src", "models", "best_model.pth")
 LOGO_PATH = os.path.join(BASE_DIR, "app", "logo.png")
 TEST_IMAGE_DIR = os.path.join(BASE_DIR, "test_samples")
 # Number of curated samples exposed inside the modal gallery
-MAX_TEST_IMAGES = 10
+MAX_TEST_IMAGES = None  # None keeps the gallery synced with the full folder
 GALLERY_INDEX_KEY = "test_gallery_index"
 RESULT_IMAGE_WIDTH = 360
 GALLERY_MODAL_FLAG = "sample_gallery_modal_open"
@@ -255,7 +255,7 @@ def get_logo_img_tag():
 
 
 def get_test_gallery(limit=MAX_TEST_IMAGES):
-    """Return up to `limit` absolute paths for curated test images."""
+    """Return absolute paths for curated test images, optionally capped by `limit`."""
     if not os.path.isdir(TEST_IMAGE_DIR):
         return []
 
@@ -263,7 +263,7 @@ def get_test_gallery(limit=MAX_TEST_IMAGES):
     for filename in sorted(os.listdir(TEST_IMAGE_DIR)):
         if filename.lower().endswith((".jpg", ".jpeg", ".png")):
             gallery.append(os.path.join(TEST_IMAGE_DIR, filename))
-        if len(gallery) >= limit:
+        if limit is not None and len(gallery) >= limit:
             break
 
     return gallery
@@ -526,7 +526,7 @@ def main():
         if image_source == gallery_option:
             if not test_gallery_paths:
                 st.warning(
-                    "No test images detected. Add up to 5 PNG/JPEG images inside the test_samples/ folder."
+                    "No test images detected. Add PNG/JPEG images inside the test_samples/ folder."
                 )
             else:
                 selected_sample_path = render_gallery_modal(test_gallery_paths)
