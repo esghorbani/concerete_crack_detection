@@ -55,6 +55,13 @@ def apply_custom_style():
             background-color: #ffffff;
         }
 
+        /* Hide Streamlit's default toolbar/menu (three dots) */
+        div[data-testid="stToolbar"],
+        div[data-testid="stMainMenu"],
+        button[kind="header"] {
+            display: none !important;
+        }
+
         [data-testid="stFooter"] {
             display: none;
         }
