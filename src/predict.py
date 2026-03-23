@@ -538,13 +538,14 @@ def main():
             else:
                 selected_sample_path = render_gallery_modal(test_gallery_paths)
 
-        threshold = st.slider(
-            "Detection threshold",
-            min_value=0.10,
-            max_value=0.90,
-            value=0.30,
-            step=0.05,
-        )
+        # threshold = st.slider(
+        #     "Detection threshold",
+        #     min_value=0.10,
+        #     max_value=0.90,
+        #     value=0.30,
+        #     step=0.05,
+        # )
+        threshold = 0.30
 
     with right_col:
         st.markdown(
